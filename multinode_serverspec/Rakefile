@@ -1,0 +1,43 @@
+require 'rake'
+require 'rspec/core/rake_task'
+require 'yaml'
+require 'highline/import'
+
+
+if ENV['PROP_FILE'].to_s.length == 0
+  properties_file  = "properties.yml"
+else
+  print ENV['PROP_FILE'].to_s
+  properties_file = ENV['PROP_FILE'].to_s
+end
+
+
+properties = YAML.load_file(properties_file)
+
+
+if ENV['SSH_USER'].to_s.length == 0
+  ENV['SSH_USER'] = ask("Enter ssh user: ") { |q| q.echo = true }
+end
+
+
+if ENV['SPEC_STRATEGY'].to_s.downcase == 'fail'
+	fail_on_err = true
+else
+	fail_on_err = false
+end
+
+desc "Run serverspec against all hosts"
+task :spec => 'serverspec:all'
+
+namespace :serverspec do
+  task :all => properties.keys.map {|key| 'serverspec:' + key.split('.')[0] }
+  properties.keys.each do |key|
+    desc "Run serverspec to #{key}"
+    RSpec::Core::RakeTask.new(key.split('.')[0].to_sym) do |t|
+      ENV['TARGET_HOST'] = key
+      print "target - #{key}\n\n"
+      t.pattern = 'spec/{' + properties[key][:roles].join(',') + '}/*_spec.rb'
+      t.fail_on_error = fail_on_err
+    end
+ end
+end

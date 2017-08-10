@@ -1,0 +1,12 @@
+graphite1.example.org:
+  :roles:
+  - graphite
+sensu1.example.org:
+  :roles:
+  - redis
+  - rabbitmq
+  - sensu
+lb1.example.org:
+  :roles:
+  - haproxy
+  - keepalived
